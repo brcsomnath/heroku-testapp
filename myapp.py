@@ -45,7 +45,7 @@ def get_heartrate():
 
     date_time_str = f"{today} {time}"
     offset = get_offset(date_time_str)
-    ret = {"heart-rate": heartrate, "time offset": f"{offset} sec"}
+    ret = {"heart-rate": heartrate, "time offset": f"{offset/60-240} sec"}
     return jsonify(ret)
 
 
@@ -61,7 +61,7 @@ def get_steps():
 
     date_time_str = f"{today} {time}"
     offset = get_offset(date_time_str)
-    ret = {"step-count": steps, "time offset": f"{offset} sec"}
+    ret = {"step-count": steps, "time offset": f"{offset/60-240} min"}
     return jsonify(ret)
 
 
@@ -83,6 +83,16 @@ def get_activity(jtype):
         "sedantary": summary["sedentaryMinutes"],
     }
     return jsonify(ret)
+
+
+@app.route("/sensor/env", methods=["GET"])
+def get_environment():
+    first = "2022-06-14"
+    last = "2022-09-13"
+    acturl = f"https://api.fitbit.com/1/user/-/temp/core/date/{first}/{last}.json"
+    resp = requests.get(acturl, headers=header).json()
+    print(resp)
+    return resp
 
 
 if __name__ == "__main__":
