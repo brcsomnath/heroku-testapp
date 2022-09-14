@@ -45,7 +45,7 @@ def get_heartrate():
 
     date_time_str = f"{today} {time}"
     offset = get_offset(date_time_str)
-    ret = {"heart-rate": heartrate, "time offset": f"{offset/60-240} sec"}
+    ret = {"heart-rate": heartrate, "time offset": f"{offset/60-240} min"}
     return jsonify(ret)
 
 
