@@ -3,6 +3,7 @@ from pymongo import MongoClient
 from flask import Flask, jsonify, request
 import requests
 import json
+import time
 import datetime
 
 app = Flask(__name__)
@@ -106,6 +107,7 @@ def get_environment():
 @app.route("/post/env", methods=["POST"])
 def post_env():
     content = request.get_json(force=True)
+    content["timestamp"] = time.time()
     db.env.insert_one(content)
     return "Success"
 
@@ -113,6 +115,7 @@ def post_env():
 @app.route("/post/pose", methods=["POST"])
 def post_pose():
     content = request.get_json(force=True)
+    content["timestamp"] = time.time()
     db.pose.insert_one(content)
     return "Success"
 
