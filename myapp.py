@@ -6,6 +6,8 @@ import json
 import time
 import datetime
 
+from bson import json_util
+
 app = Flask(__name__)
 
 
@@ -17,6 +19,10 @@ db = client["somnath_db"]
 
 token = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyMzhRUEYiLCJzdWIiOiJCNEYzNVEiLCJpc3MiOiJGaXRiaXQiLCJ0eXAiOiJhY2Nlc3NfdG9rZW4iLCJzY29wZXMiOiJyc29jIHJzZXQgcm94eSBycHJvIHJudXQgcnNsZSByYWN0IHJyZXMgcmxvYyByd2VpIHJociBydGVtIiwiZXhwIjoxNjkyMzIyMTc4LCJpYXQiOjE2NjA3ODYxNzh9.t4-tjP-pBKe-wdbYLTL9t-h7wAOWsAlu-cGurSkfJiU"
 header = {"Accept": "application/json", "Authorization": "Bearer {}".format(token)}
+
+
+def parse_json(data):
+    return json.loads(json_util.dumps(data))
 
 
 def get_offset(date_time_str):
@@ -96,12 +102,14 @@ def get_activity(jtype):
 
 @app.route("/sensor/env", methods=["GET"])
 def get_environment():
-    first = "2022-06-14"
-    last = "2022-09-13"
-    acturl = f"https://api.fitbit.com/1/user/-/temp/core/date/{first}/{last}.json"
-    resp = requests.get(acturl, headers=header).json()
-    print(resp)
-    return resp
+    row = db.env.find().sort("_id", -1).limit(1)
+    return jsonify(parse_json(row))
+
+
+@app.route("/sensor/pose", methods=["GET"])
+def get_pose():
+    row = db.pose.find().sort("_id", -1).limit(1)
+    return jsonify(parse_json(row))
 
 
 @app.route("/post/env", methods=["POST"])
