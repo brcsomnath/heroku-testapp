@@ -1,10 +1,18 @@
-from flask import Flask, jsonify
+from pymongo import MongoClient
+
+from flask import Flask, jsonify, request
 import requests
 import json
 import datetime
 
 app = Flask(__name__)
 
+
+client = MongoClient(
+    # "mongodb+srv://brcsomnath:somnath@cluster0.yotvcvg.mongodb.net/test"
+    "mongodb+srv://somnath_db:hf931nG5qL2zTWXL@cluster0.jt4v9ik.mongodb.net/?retryWrites=true&w=majority"
+)
+db = client["somnath_db"]
 
 token = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyMzhRUEYiLCJzdWIiOiJCNEYzNVEiLCJpc3MiOiJGaXRiaXQiLCJ0eXAiOiJhY2Nlc3NfdG9rZW4iLCJzY29wZXMiOiJyc29jIHJzZXQgcm94eSBycHJvIHJudXQgcnNsZSByYWN0IHJyZXMgcmxvYyByd2VpIHJociBydGVtIiwiZXhwIjoxNjkyMzIyMTc4LCJpYXQiOjE2NjA3ODYxNzh9.t4-tjP-pBKe-wdbYLTL9t-h7wAOWsAlu-cGurSkfJiU"
 header = {"Accept": "application/json", "Authorization": "Bearer {}".format(token)}
@@ -72,7 +80,7 @@ def get_sleep(jtype):
     return jsonify(resp["summary"]["stages"])
 
 
-@app.route("/activity/<jtype>", methods=["GET"])
+@app.route("/  /<jtype>", methods=["GET"])
 def get_activity(jtype):
     acturl = f"https://api.fitbit.com/1/user/-/activities/date/{jtype}.json"
     resp = requests.get(acturl, headers=header).json()
@@ -93,6 +101,20 @@ def get_environment():
     resp = requests.get(acturl, headers=header).json()
     print(resp)
     return resp
+
+
+@app.route("/post/env", methods=["POST"])
+def post_env():
+    content = request.get_json(force=True)
+    db.env.insert_one(content)
+    return "Success"
+
+
+@app.route("/post/pose", methods=["POST"])
+def post_pose():
+    content = request.get_json(force=True)
+    db.pose.insert_one(content)
+    return "Success"
 
 
 if __name__ == "__main__":
