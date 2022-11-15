@@ -29,19 +29,23 @@ def get_offset(time):
     tm_hr, tm_min, tm_sec = time.split(":")
     tm_hr = int(tm_hr)
     tm_min = int(tm_min)
+    tm_sec = int(tm_sec)
     now = datetime.datetime.now()
     print(f"now: {now}")
     print(f"time: {time}")
 
     curr_hr = now.hour
     curr_min = now.minute
-    curr_time = (curr_hr) * 60 + curr_min + 300
-    tm_time = (tm_hr) * 60 + tm_min
+    curr_sec = now.second
+    curr_time = (curr_hr) * 60 * 60 + curr_min * 60 + curr_sec
+    if curr_time < 300 * 60:
+        curr_time += 19 * 60 * 60
+    else:
+        curr_time -= 5 * 60 * 60
+
+    tm_time = (tm_hr) * 60 * 60 + tm_min * 60 + tm_sec
     # assert curr_time >= tm_time
     offset = curr_time - tm_time
-
-    if offset < 0:
-        offset += 840
     return offset
 
 
