@@ -30,13 +30,18 @@ def get_offset(time):
     tm_hr = int(tm_hr)
     tm_min = int(tm_min)
     now = datetime.datetime.now()
-    print(now)
+    print(f"now: {now}")
+    print(f"time: {time}")
+
     curr_hr = now.hour
     curr_min = now.minute
-    curr_time = (curr_hr) * 60 + curr_min + 240
+    curr_time = (curr_hr) * 60 + curr_min + 300
     tm_time = (tm_hr) * 60 + tm_min
     # assert curr_time >= tm_time
     offset = curr_time - tm_time
+
+    if offset < 0:
+        offset += 840
     return offset
 
 
