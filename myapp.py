@@ -25,10 +25,21 @@ def parse_json(data):
     return json.loads(json_util.dumps(data))
 
 
-def get_offset(date_time_str):
-    last_time = datetime.datetime.strptime(date_time_str, "%Y-%m-%d %H:%M:%S")
-    offset = datetime.datetime.now() - last_time
-    return offset.seconds
+def get_offset(time):
+    # last_time = datetime.datetime.strptime(date_time_str, "%Y-%m-%d %H:%M:%S")
+    # offset = datetime.datetime.now() - last_time
+    # return offset.seconds
+    tm_hr, tm_min, tm_sec = time.split(":")
+    tm_hr = int(tm_hr)
+    tm_min = int(tm_min)
+    now = datetime.datetime.now()
+    curr_hr = now.hour
+    curr_min = now.minute
+    curr_time = (curr_hr) * 60 + curr_min
+    tm_time = (tm_hr) * 60 + tm_min
+    assert curr_time >= tm_time
+    offset = curr_time - tm_time
+    return offset
 
 
 def get_today():
@@ -45,50 +56,71 @@ def mymethod():
 
 @app.route("/heartrate/last", methods=["GET"])
 def get_heartrate():
-    today = get_today()
+    today = "today"
     url = (
         "https://api.fitbit.com/1/user/-/activities/heart/date/"
         + today
         + "/1d/1min.json"
     )
     resp = requests.get(url, headers=header).json()
-    if len(resp["activities-heart-intraday"]["dataset"]) == 0:
-        print("Pick another date")
-        return
-    heartrate = resp["activities-heart-intraday"]["dataset"][-1]["value"]
-    time = resp["activities-heart-intraday"]["dataset"][-1]["time"]
 
-    date_time_str = f"{today} {time}"
-    offset = get_offset(date_time_str)
-    ret = {"heart-rate": heartrate, "time offset": f"{offset/60-240} min"}
-    return jsonify(ret)
+    data = resp["activities-heart-intraday"]["dataset"][::-1]
+    for i in range(len(data)):
+        time = data[i]["time"]
+        val = data[i]["value"]
+        if val > 0:
+            offset = get_offset(time)
+            ret = {"heart-rate": val, "time offset": offset}
+            return jsonify(ret)
+
+    return "No heart rate found for today"
 
 
 @app.route("/steps/last", methods=["GET"])
 def get_steps():
-    today = get_today()
-    acturl = f"https://api.fitbit.com/1/user/-/activities/steps/date/{today}/1d.json"
-    resp = requests.get(acturl, headers=header).json()
+    today = "today"
+    acturl = (
+        f"https://api.fitbit.com/1/user/-/activities/steps/date/{today}/1d/1min.json"
+    )
+    steps_resp = requests.get(acturl, headers=header).json()
 
-    steps = resp["activities-steps-intraday"]["dataset"][-1]["value"]
-    time = resp["activities-steps-intraday"]["dataset"][-1]["time"]
-    print(resp)
+    step_count = 0
+    time = None
+    for v in steps_resp["activities-steps-intraday"]["dataset"]:
+        step_count += v["value"]
+        if time is None and v["value"] > 0:
+            time = v["time"]
 
-    date_time_str = f"{today} {time}"
-    offset = get_offset(date_time_str)
-    ret = {"step-count": steps, "time offset": f"{offset/60-240} min"}
-    return jsonify(ret)
+    acturl = (
+        f"https://api.fitbit.com/1/user/-/activities/distance/date/{today}/1d/1min.json"
+    )
+    dist_resp = requests.get(acturl, headers=header).json()
+    distance = 0
+    for v in dist_resp["activities-distance-intraday"]["dataset"]:
+        distance += v["value"]
+
+    offset = get_offset(time)
+
+    return jsonify(
+        {
+            "step-count": step_count,
+            "distance": round(distance, 2),
+            "time offset": offset,
+        }
+    )
 
 
 @app.route("/sleep/<jtype>", methods=["GET"])
 def get_sleep(jtype):
+    # 2022-08-24
     acturl = f"https://api.fitbit.com/1.2/user/-/sleep/date/{jtype}.json"
     resp = requests.get(acturl, headers=header).json()
     return jsonify(resp["summary"]["stages"])
 
 
-@app.route("/  /<jtype>", methods=["GET"])
+@app.route("/activity/<jtype>", methods=["GET"])
 def get_activity(jtype):
+    # 2022-08-24
     acturl = f"https://api.fitbit.com/1/user/-/activities/date/{jtype}.json"
     resp = requests.get(acturl, headers=header).json()
     summary = resp["summary"]
@@ -100,16 +132,28 @@ def get_activity(jtype):
     return jsonify(ret)
 
 
-@app.route("/sensor/env", methods=["GET"])
+@app.route("/sensors/env", methods=["GET"])
 def get_environment():
     row = db.env.find().sort("_id", -1).limit(1)
-    return jsonify(parse_json(row))
+    resp = parse_json(row)[0]
+
+    data = {}
+    data["temp"] = float(resp["temp"])
+    data["humidity"] = float(resp["humidity"])
+    data["timestamp"] = float(resp["timestamp"])
+    return jsonify(data)
 
 
-@app.route("/sensor/pose", methods=["GET"])
+@app.route("/sensors/pose", methods=["GET"])
 def get_pose():
     row = db.pose.find().sort("_id", -1).limit(1)
-    return jsonify(parse_json(row))
+    resp = parse_json(row)[0]
+
+    data = {}
+    data["presence"] = resp["presence"]
+    data["pose"] = resp["pose"]
+    data["timestamp"] = float(resp["timestamp"])
+    return jsonify(data)
 
 
 @app.route("/post/env", methods=["POST"])
