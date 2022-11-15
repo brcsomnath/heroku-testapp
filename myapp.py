@@ -134,7 +134,7 @@ def get_activity(jtype):
     ret = {
         "very-active": summary["veryActiveMinutes"],
         "lightly-active": summary["lightlyActiveMinutes"],
-        "sedantary": summary["sedentaryMinutes"],
+        "sedentary": summary["sedentaryMinutes"],
     }
     return jsonify(ret)
 
