@@ -30,6 +30,7 @@ def get_offset(time):
     tm_hr = int(tm_hr)
     tm_min = int(tm_min)
     now = datetime.datetime.now()
+    print(now)
     curr_hr = now.hour
     curr_min = now.minute
     curr_time = (curr_hr) * 60 + curr_min + 240
