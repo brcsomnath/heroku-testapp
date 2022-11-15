@@ -26,18 +26,15 @@ def parse_json(data):
 
 
 def get_offset(time):
-    # last_time = datetime.datetime.strptime(date_time_str, "%Y-%m-%d %H:%M:%S")
-    # offset = datetime.datetime.now() - last_time
-    # return offset.seconds
     tm_hr, tm_min, tm_sec = time.split(":")
     tm_hr = int(tm_hr)
     tm_min = int(tm_min)
     now = datetime.datetime.now()
     curr_hr = now.hour
     curr_min = now.minute
-    curr_time = (curr_hr) * 60 + curr_min
+    curr_time = (curr_hr) * 60 + curr_min + 240
     tm_time = (tm_hr) * 60 + tm_min
-    assert curr_time >= tm_time
+    # assert curr_time >= tm_time
     offset = curr_time - tm_time
     return offset
 
